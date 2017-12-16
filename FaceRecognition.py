@@ -1,78 +1,32 @@
 from matplotlib import pyplot as plt
 import numpy as np
 from numpy import linalg as LA
+import matplotlib.image as mpimg
 from PIL import Image
 print("Enter a value for selecting a Test Image")
-print("Enter 1 for subject01.centerlight.jpg")
-print("Enter 2 for subject01.happy.jpg")
-print("Enter 3 for subject01.normal.jpg")
-print("Enter 4 for subject02.normal.jpg")
-print("Enter 5 for subject03.normal.jpg")
-print("Enter 6 for subject07.centerlight.jpg")
-print("Enter 7 for subject07.happy.jpg")
-print("Enter 8 for subject07.normal.jpg")
-print("Enter 9 for subject10.normal.jpg")
-print("Enter 10 for subject11.centerlight.jpg")
-print("Enter 11 for subject11.happy.jpg")
-print("Enter 12 for subject11.normal.jpg")
-print("Enter 13 for subject12.normal.jpg")
-print("Enter 14 for subject14.happy.jpg")
-print("Enter 15 for subject14.normal.jpg")
-print("Enter 16 for subject14.sad.jpg")
-print("Enter 17 for subject15.normal.jpg")
-print("Enter 18 for apple1_gray.jpg")
-print("Enter Value:")
-value =input()
-def select(value):
-    image = ""
-    if value =="1":
-        image ="subject01.centerlight.jpg"
-    if value == "2":
-        image ="subject01.happy.jpg"
-    if value == "3":
-        image ="subject01.normal.jpg"
-    if value == "4":
-        image ="subject02.normal.jpg"
-    if value == "5":
-        image ="subject03.normal.jpg"
-    if value == "6":
-        image ="subject07.centerlight.jpg"
-    if value == "7":
-        image ="subject07.happy.jpg"
-    if value == "8":
-        image ="subject07.normal.jpg"
-    if value == "9":
-        image ="subject10.normal.jpg"
-    if value == "10":
-        image ="subject11.centerlight.jpg"
-    if value == "11":
-        image ="subject11.happy.jpg"
-    if value == "12":
-        image ="subject11.normal.jpg"
-    if value == "13":
-        image ="subject12.normal.jpg"
-    if value == "14":
-        image ="subject14.happy.jpg"
-    if value == "15":
-        image ="subject14.normal.jpg"
-    if value == "16":
-        image ="subject14.sad.jpg"
-    if value == "17":
-        image ="subject15.normal.jpg"
-    if value == "18":
-        image ="apple1_gray.jpg"
-    return image
-imagevalue = select(value)
+
+#select image to test
+
+test = ['subject01.centerlight.jpg','subject01.happy.jpg','subject01.normal.jpg','subject02.normal.jpg','subject03.normal.jpg','subject07.centerlight.jpg','subject07.happy.jpg','subject07.normal.jpg','subject10.normal.jpg','subject11.centerlight.jpg','subject11.happy.jpg','subject11.normal.jpg','subject12.normal.jpg','subject14.happy.jpg','subject14.normal.jpg','subject14.sad.jpg','subject15.normal.jpg','apple1_gray.jpg']
+for i in range(0,18):
+    print("Enter "+str(i)+" for selecting test image "+test[i])
+value =int(input())
+if value>17:
+    print("Not a valid Number - Please select value from 0-17")
+#define training images
 TrainingImages = ['subject01.normal.jpg', 'subject02.normal.jpg', 'subject03.normal.jpg', 'subject07.normal.jpg', 'subject10.normal.jpg', 'subject11.normal.jpg', 'subject14.normal.jpg', 'subject15.normal.jpg']
 Imageobjects = []
 data = []
 totalLength = len(TrainingImages)
 for i in range(totalLength):
-    image_object = Image.open(TrainingImages[i])
+    inputValue = TrainingImages[i]
+    image_object = Image.open(inputValue)
     Imageobjects.append(image_object)
     data.append(image_object)
 width, height = Imageobjects[0].size
 length = len(Imageobjects)
+#images are stacked in the list imagesN2vector
+#The mean face m(meanFace) is computed by taking the average of the M training face images
 def N2andaverage(width, height):
     meanFace = np.zeros((width*height,1),dtype = np.int64)
     N2vector = []
@@ -85,11 +39,13 @@ def N2andaverage(width, height):
         for i in range(height):
             for j in range(width):
                 l = width+height
+                #storing the pixel value in the form of increasing rows with single column
                 eachImages[k,0] = Imageobjects[images].getpixel((j,i))
                 create.append(eachImages)
                 k = k + 1
         N2vector.append(eachImages)
     val = range(len(N2vector[0]))
+    #calculating mean
     for i in val:
         sum = 0
         v1 = len(N2vector)
@@ -110,23 +66,32 @@ def subtractFace(imagesN2, meanFace):
     facevalue = []
     r = range(length)
     for images in r:
+        #subtract mean face
         individualImages = np.subtract(imagesN2[images],meanFace)
         facevalue.append(meanFace)
+         #appending the individual subtracted image stacked in one list
         subtractface.append(individualImages)
-    t = len(subtractface)
-    A = np.zeros((cross,t),dtype = np.int16)
+    t = len(subtractface) #length of subtractafce
+    A = np.zeros((cross,t),dtype = np.int16) #empty matrix 
     r1= range(cross)
     for i in r1:
         r2=range(t)
         for j in r2:
+            #All training faces into a single matrix A 
             A[i,j] = subtractface[j][i][0]
             facevalue.append(A)
+    #AT is the transpose of matrix A
+#taking the dot product of AT and A to get the matrix L
+# calculating the eigenvalue and eigen vector
+# w1 is the eigenvalue, w2 is the eigenvector
     AT = np.transpose(A)
     L = np.dot(AT, A)
-    w1, w2 = LA.eig(L) #eigenvalues
-    final = np.dot(A, w2)
+    w1, w2 = LA.eig(L) #eigenvalues and eigenvector
+    #final is eigenspace/facespace
+    final = np.dot(A, w2) 
     term = range (len(final[0]))
-    for i in term:
+    for i in range (len(final[0])):
+        #print eigen faces of training values
         plt.title('Eighen face of TrainingImage '+ str(i))
         img = (final[:,i].reshape(231,195))
         plt.imshow(img,cmap='gray')
@@ -140,6 +105,7 @@ def projectedFaceSpace(final, sFace):
     length = len(Imageobjects)
     r = range(length)
     for images in r:
+        #project train space on face space
         dot = np.dot(np.transpose(final), sFace[images])
         projectedfacespace.append(dot)
         projected.append(rows)
@@ -149,11 +115,16 @@ def PCA_Coefficients(projectedfacespace):
     length = len(projectedfacespace)
     r = range(length)
     for i in r:
+        #get all PCA coefficients
         print ("PCA Coefficient for training Image ",i)
         print (projectedfacespace[i])
 PCA_Coefficients(projectedfacespace)
+testImage = test[value]
+imagevalue =  test[value]
 test_image = Image.open(imagevalue)
 width, height =Image.open(imagevalue).size
+#reading the test image of which the face needs to be recognized
+#subtracting the mean face m from each test face
 def getTestandSubtractImage(width, height,meanFace):
     total = width*height
     h = range(height)
@@ -174,28 +145,64 @@ reshape = I.reshape(231,195)
 plt.imshow(reshape, cmap = "gray")
 plt.show()
 def projectiononFace(U, I):
+    #computing subtracted projection onto the face space
     trans = np.transpose(U)
+    
     projectionface = np.dot(trans, I)
+    #Reconstruct input face image from the eigenfaces
     reconstructedimage = np.dot(U, projectionface)
     print ("PCA coefficent of "+imagevalue+ " is")
     print(projectionface)
     return reconstructedimage,projectionface
 reconstructedimage,projectionface = projectiononFace(final, I)
+#printing constructed Face
 print("Reconstructed Image of " + imagevalue)
 shape1 = reconstructedimage.reshape(231,195)
 plt.imshow(shape1, cmap = "gray")
 plt.show()
+#Computing the distance between the input face image and the reconstruction of the image
+#use euclidean distance
 def EuclideanDistance(reconstructedimage, I):
-    Di=[]
     subtractedform = LA.norm( np.subtract(reconstructedimage, I))
     print("Distance di is = "+str(subtractedform) )
     length =len(projectedfacespace)
     r = range(length)
-    for i in r:
-        subtract = np.subtract(projectionface, projectedfacespace[i])
+    return subtractedform
+def calculate(projection, projected):
+    Di=[]
+    length1 = len(projected)
+    r1= range(length1)
+    # distance between input face image and training images in the face space
+#projection is the projected test face,projected[i] is the individual traing images
+    for i in r1:
+        subtract = np.subtract(projection, projected[i])
         di = LA.norm(subtract)
         Di.append(di)
     return Di
-Di = EuclideanDistance(reconstructedimage, I)
-print("Given Test Image is Matched with = " + TrainingImages[Di.index(min(Di))])
-plt.show()
+
+sub = EuclideanDistance(reconstructedimage, I)
+
+#to to identify whether image is face or not 
+T0 = 7345724145782
+#T1 is used to identify whether the face is present in the dataset or not
+T1 = 90000000
+if (sub < T0):
+    Di = calculate(projectionface, projectedfacespace)
+    print("Distance D of the given Test Image to Train Image is " + str(min(Di)))
+    if (min(Di) > T1):
+        print("Unknown face")
+    else:
+        minimum = Di.index(min(Di))
+        print("The Face with which the given face is similar to is", TrainingImages[minimum])
+        plt.title('Input Test Image Given')
+        plt.imshow(mpimg.imread(testImage),cmap='gray')
+        plt.figure()
+        minDist = Di.index(min(Di))
+        plt.imshow(mpimg.imread(TrainingImages[minDist]),cmap='gray')
+        plt.title('Resulting image')
+        plt.show()
+
+else:
+    print ("Its Non face")
+    
+
